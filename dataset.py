@@ -17,6 +17,6 @@ class UnscramblingDataset(Dataset):
         )
 
     def __len__(self):
-        return len(self.df)
+        return len(self.sentences)
 
 
