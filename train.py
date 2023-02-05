@@ -12,13 +12,14 @@ from transformers import get_linear_schedule_with_warmup
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import time
+import os
 
 
 parser = ArgumentParser()
 
 parser.add_argument('--epochs', type=int, default=100, help='number of epochs for training')
 parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-parser.add_argument('--learning_rate', type=float, default=2e-5, help='learning rate')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='learning rate')
 parser.add_argument('--tokenizer', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='tokenizer')
 parser.add_argument(
     '--train_dataset', type=str,
@@ -29,11 +30,15 @@ parser.add_argument(
     default='dataset/val_informal.csv', help='test sentences'
 )
 parser.add_argument('--model_name', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='dataset directory')
+parser.add_argument('--checkpoint_dir', type=str, default='checkpoint', help='dataset directory')
+parser.add_argument('--resume_training_dir', type=str, default='-1', help='dataset directory')
 
 args = parser.parse_args()
 
 experiment = str(int(time.time()))
-writer = SummaryWriter('runs/' + experiment)
+dir = os.path.join(args.checkpoint_dir, experiment)
+os.makedirs(dir, exist_ok=True)
+writer = SummaryWriter(os.path.join(dir, 'runs'))
 
 train_sentences, val_sentences = read_dataset(args.train_dataset)
 
@@ -52,6 +57,14 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model = UnscramblingModule(args.model_name)
 model.to(device)
+
+a = train_dataset[0]
+print()
+print('words ' + a[0])
+print('sentence ' + a[1])
+print()
+print(f"You are using {device}")
+print()
 
 print(f"You are using {device}")
 print()
@@ -75,8 +88,7 @@ def train_epoch(model, dataloader, optimizer, scheduler, epoch):
         for batch in tepoch:
             tepoch.set_description(f"Train Epoch {epoch + 1}/{args.epochs}")
 
-            batch = {k: v.to(device) for k, v in batch.items()}
-
+            batch = {k: v.to(device) for k, v in batch.items() if k != 'token_type_ids'}
             output = model(**batch)
             loss = output['loss']
             losses.append(loss.item())
@@ -104,7 +116,7 @@ def eval_model(model, dataloader, epoch):
             for batch in tepoch:
                 tepoch.set_description(f"Validation Epoch {epoch + 1}/{args.epochs}")
 
-                batch = {k: v.to(device) for k, v in batch.items()}
+                batch = {k: v.to(device) for k, v in batch.items() if k != 'token_type_ids'}
 
                 output = model(**batch)
                 loss = output['loss']
@@ -121,6 +133,12 @@ losses = []
 val_losses = []
 
 best_loss = 100
+
+if args.resume_training_dir != '-1':
+    model.load_state_dict(torch.load(os.path.join(args.resume_training_dir, 'model.pth')))
+    optimizer.load_state_dict(torch.load(os.path.join(args.resume_training_dir, 'optimizer.pth')))
+    scheduler.load_state_dict(torch.load(os.path.join(args.resume_training_dir, 'scheduler.pth')))
+
 
 for epoch in range(args.epochs):
 
@@ -147,7 +165,12 @@ for epoch in range(args.epochs):
     val_losses.append(val_loss)
 
     if val_loss < best_loss:  # save model if its accuracy is bigger than best model accuracy
-        torch.save(model.state_dict(), experiment + '.pth')
+        torch.save(model.state_dict(), os.path.join(dir, 'model.pth'))
+        torch.save(optimizer.state_dict(), os.path.join(dir, 'optimizer.pth'))
+        torch.save(scheduler.state_dict(), os.path.join(dir, 'scheduler.pth'))
         best_loss = val_loss
 
+
+torch.save(optimizer.state_dict(), os.path.join(dir, 'optimizer.pth'))
+torch.save(scheduler.state_dict(), os.path.join(dir, 'scheduler.pth'))
 print(f"Best Loss is {best_loss:0.4f}")
