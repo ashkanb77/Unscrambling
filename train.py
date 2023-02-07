@@ -23,11 +23,7 @@ parser.add_argument('--learning_rate', type=float, default=0.0001, help='learnin
 parser.add_argument('--tokenizer', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='tokenizer')
 parser.add_argument(
     '--train_dataset', type=str,
-    default='dataset/train_dataset.csv', help='train sentences'
-)
-parser.add_argument(
-    '--val_dataset', type=str,
-    default='dataset/val_dataset.csv', help='test sentences'
+    default='drive/MyDrive/train.csv', help='train sentences'
 )
 parser.add_argument('--model_name', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='dataset directory')
 parser.add_argument('--checkpoint_dir', type=str, default='checkpoint', help='dataset directory')

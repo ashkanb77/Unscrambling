@@ -4,8 +4,8 @@ from sklearn.model_selection import train_test_split
 
 def read_dataset(train_informal_path, split=True):
     df = pd.read_csv(train_informal_path)
-    df.rename(columns={"formalForm": "FormalForm"}, inplace=True)
-    df = df[['FormalForm']]
+    df = df.sample(int(len(df) * 0.2))
+    df = df[['Shuffled', 'Original']]
 
     df.dropna(inplace=True)
 

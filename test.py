@@ -26,12 +26,13 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = UnscramblingModule(args.model)
 model.load_state_dict(torch.load(args.model_checkpoint, map_location=device))
 model.to(device)
+model.eval()
 
 rouge = Rouge()
 
 
 def convert_compute(input_ids, attention_mask, labels):
-    generated_ids = model.t5_model.generate(
+    generated_ids = model.transformer.generate(
         input_ids=input_ids,
         attention_mask=attention_mask, max_new_tokens=150
     )
@@ -60,6 +61,8 @@ val_dataset = UnscramblingDataset(val_sentences)
 val_dataloader = DataLoader(val_dataset, collate_fn=lambda data: collate_fn(data, tokenizer),
                             batch_size=args.batch_size)
 
+print(f'you are using {device}')
+
 d = {'words': [], 'prediction': [], 'ground_truth': []}
 scores = {'rouge-1': 0, 'rouge-2': 0, 'rouge-l': 0}
 i = 0
@@ -67,7 +70,7 @@ with tqdm(val_dataloader, unit="batch") as tepoch:
     for batch in tepoch:
         tepoch.set_description(f"Validation")
 
-        batch = {k: v.to(device) for k, v in batch.items()}
+        batch = {k: v.to(device) for k, v in batch.items() if k != 'token_type_ids'}
         inputs_str, preds_str, labels_str, rouge_output = convert_compute(**batch)
 
         scores = {k: scores[k] + v for k, v in rouge_output.items()}

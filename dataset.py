@@ -1,19 +1,14 @@
 from torch.utils.data import Dataset
-from random import shuffle
-from hazm import WordTokenizer
 
 
 class UnscramblingDataset(Dataset):
     def __init__(self, sentences):
         self.sentences = sentences
-        self.tokenizer = WordTokenizer()
 
     def __getitem__(self, item):
-        sentence = self.sentences[item][0]
-        words = self.tokenizer.tokenize(sentence)
-        shuffle(words)
+        row = self.sentences[item]
         return (
-           ' '.join(words), sentence
+           row[0], row[1]
         )
 
     def __len__(self):
