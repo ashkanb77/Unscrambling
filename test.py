@@ -46,19 +46,7 @@ def convert_compute(input_ids, attention_mask, labels):
     labels[labels == -100] = tokenizer.pad_token_id
     label_str = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-    scores = {'rouge-1': 0, 'rouge-2': 0, 'rouge-l': 0, 'BLEU-1': 0, 'BLEU-2': 0}
-
-    for i in range(len(pred_str)):
-        reference = [
-            label_str[i].split()
-        ]
-        candidate = pred_str[i].split()
-
-        scores['BLEU-1'] += sentence_bleu(reference, candidate, weights=(1, 0))
-        scores['BLEU-2'] += sentence_bleu(reference, candidate, weights=(0, 1))
-
-    scores['BLEU-1'] = scores['BLEU-1'] / (i + 1)
-    scores['BLEU-2'] = scores['BLEU-2'] / (i + 1)
+    scores = {'rouge-1': 0, 'rouge-2': 0, 'rouge-l': 0}
 
     rouge_output = rouge.get_scores(pred_str, label_str)
     for row in rouge_output:
@@ -82,7 +70,7 @@ val_dataloader = DataLoader(val_dataset, collate_fn=lambda data: collate_fn(data
 print(f'you are using {device}')
 
 d = {'words': [], 'prediction': [], 'ground_truth': []}
-scores = {'rouge-1': 0, 'rouge-2': 0, 'rouge-l': 0, 'BLEU-1': 0, 'BLEU-2': 0}
+scores = {'rouge-1': 0, 'rouge-2': 0, 'rouge-l': 0}
 i = 0
 with tqdm(val_dataloader, unit="batch") as tepoch:
     for batch in tepoch:
@@ -98,8 +86,7 @@ with tqdm(val_dataloader, unit="batch") as tepoch:
         d['prediction'] = d['prediction'] + preds_str
         d['ground_truth'] = d['ground_truth'] + labels_str
         tepoch.set_postfix(rouge1=output_scores['rouge-1'], rouge2=output_scores['rouge-2'],
-                           rougel=output_scores['rouge-l'], BLEU1=output_scores['BLEU-1'],
-                           BLEU2=output_scores['BLEU-2'])
+                           rougel=output_scores['rouge-l'])
 
 scores = {k: v / i for k, v in scores.items()}
 print(scores)
