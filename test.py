@@ -31,6 +31,7 @@ model.load_state_dict(torch.load(args.model_checkpoint, map_location=device))
 model.to(device)
 model.eval()
 
+
 rouge = Rouge()
 
 
@@ -72,7 +73,7 @@ def convert_compute(input_ids, attention_mask, labels):
     return input_str, pred_str, label_str, scores
 
 
-_, val_sentences = read_dataset(args.validation_path, args.column_names, split=not args.last_5_percent, last_5_percent=args.last_5_percent)
+_, val_sentences = read_dataset(args.validation_path, args.column_names.split(), split=not args.last_5_percent, last_5_percent=args.last_5_percent)
 
 val_dataset = UnscramblingDataset(val_sentences)
 val_dataloader = DataLoader(val_dataset, collate_fn=lambda data: collate_fn(data, tokenizer),
@@ -88,16 +89,17 @@ with tqdm(val_dataloader, unit="batch") as tepoch:
         tepoch.set_description(f"Validation")
 
         batch = {k: v.to(device) for k, v in batch.items() if k != 'token_type_ids'}
-        inputs_str, preds_str, labels_str, rouge_output = convert_compute(**batch)
+        inputs_str, preds_str, labels_str, output_scores = convert_compute(**batch)
 
-        scores = {k: scores[k] + v for k, v in rouge_output.items()}
+        scores = {k: scores[k] + v for k, v in output_scores.items()}
         i += 1
 
         d['words'] = d['words'] + inputs_str
         d['prediction'] = d['prediction'] + preds_str
         d['ground_truth'] = d['ground_truth'] + labels_str
-        tepoch.set_postfix(rouge1=rouge_output['rouge-1'], rouge2=rouge_output['rouge-2'],
-                           rougel=rouge_output['rouge-l'])
+        tepoch.set_postfix(rouge1=output_scores['rouge-1'], rouge2=output_scores['rouge-2'],
+                           rougel=output_scores['rouge-l'], BLEU1=output_scores['BLEU-1'],
+                           BLEU2=output_scores['BLEU-2'])
 
 scores = {k: v / i for k, v in scores.items()}
 print(scores)
