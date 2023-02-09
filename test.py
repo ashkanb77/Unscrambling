@@ -16,7 +16,9 @@ parser.add_argument('--tokenizer', type=str, default='m3hrdadfi/bert2bert-fa-wik
 parser.add_argument('--batch_size', type=int, default=16, help='batch size')
 parser.add_argument('--model', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='model')
 parser.add_argument('--model_checkpoint', type=str, default='model.pth', help='checkpoint directory')
+parser.add_argument('--last_5_percent', type=bool, default=False, help='use last 5 percent of data to test model.')
 parser.add_argument('--validation_path', type=str, default='val_informals.csv')
+parser.add_argument('--column_names', type=str, default='Shuffled Original', help='column names separated with space. first shuffled and second orginal.')
 
 args = parser.parse_args()
 tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
@@ -55,7 +57,7 @@ def convert_compute(input_ids, attention_mask, labels):
     return input_str, pred_str, label_str, scores
 
 
-_, val_sentences = read_dataset(args.validation_path)
+_, val_sentences = read_dataset(args.validation_path, args.column_names, split=not args.last_5_percent, last_5_percent=args.last_5_percent)
 
 val_dataset = UnscramblingDataset(val_sentences)
 val_dataloader = DataLoader(val_dataset, collate_fn=lambda data: collate_fn(data, tokenizer),

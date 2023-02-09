@@ -26,6 +26,7 @@ parser.add_argument(
     default='drive/MyDrive/train.csv', help='train sentences'
 )
 parser.add_argument('--model_name', type=str, default='m3hrdadfi/bert2bert-fa-wiki-summary', help='dataset directory')
+parser.add_argument('--column_names', type=str, default='Shuffled Original', help='column names separated with space. first shuffled and second orginal.')
 parser.add_argument('--checkpoint_dir', type=str, default='checkpoint', help='dataset directory')
 parser.add_argument('--resume_training_dir', type=str, default='-1', help='dataset directory')
 
@@ -36,7 +37,7 @@ dir = os.path.join(args.checkpoint_dir, experiment)
 os.makedirs(dir, exist_ok=True)
 writer = SummaryWriter(os.path.join(dir, 'runs'))
 
-train_sentences, val_sentences = read_dataset(args.train_dataset)
+train_sentences, val_sentences = read_dataset(args.train_dataset, args.column_names.split())
 
 tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
 
