@@ -43,7 +43,7 @@ def convert(text):
     return "".join(preds)
 
 
-with open(args.informal_texts, 'r') as file:
+with open(args.input_words, 'r') as file:
     words_list = []
     for line in file:
         words_list.append(line)
