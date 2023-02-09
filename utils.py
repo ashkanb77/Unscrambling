@@ -2,8 +2,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def read_dataset(train_informal_path, column_names, split=True, last_5_percent=False):
-    df = pd.read_csv(train_informal_path)
+def read_dataset(train_path, column_names, split=True, last_5_percent=False):
+    df = pd.read_csv(train_path)
     df = df[column_names]
 
     if last_5_percent:
